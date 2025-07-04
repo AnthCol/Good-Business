@@ -8,10 +8,14 @@ int main(int argc, char** argv) {
 
     std::vector<char> buffer(fileSize); 
 
-    fptr.read(buffer.data(), buffer.size()); 
+    fptr.read(buffer.data(), buffer.size());    
 
 
-    std::cout << "Made it to end\n"; 
+    BRSTM brstm; 
+
+    brstm.parse(buffer); 
+
+
 
     return 0; 
 }
