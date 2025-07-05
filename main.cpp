@@ -1,4 +1,4 @@
-#include "common.h"
+#include "brstm.h"
 
 int main(int argc, char** argv) {
     std::string path = "./SampleFiles/2ouvenir.70.brstm"; 
@@ -12,10 +12,20 @@ int main(int argc, char** argv) {
 
 
     BRSTM brstm; 
-
     brstm.parse(buffer); 
 
 
+
+    // At this point the brstm object is filled 
+    // with the relevant data
+
+    /*
+        pcm = brstm.decode();  
+        mp3 = pcm.encodeToMP3(); 
+
+        std::ofstream output("output.mp3", std::ios::binary); 
+        output.write(mp3)
+    */
 
     return 0; 
 }
