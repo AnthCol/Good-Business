@@ -19,12 +19,12 @@ inline void BRSTM::copyBytes(uint32_t& dst,
     // Everything else is represented as a uint8_t array. 
 
     // NOTE Endian assumed for now
-
+    
     dst = static_cast<uint32_t>(
-        static_cast<uint32_t>(src[ptr])     << 24 |
-        static_cast<uint32_t>(src[ptr + 1]) << 16 |
-        static_cast<uint32_t>(src[ptr + 2]) << 8  |
-        static_cast<uint32_t>(src[ptr + 3])
+        static_cast<uint8_t>(src[ptr])     << 24 |
+        static_cast<uint8_t>(src[ptr + 1]) << 16 |
+        static_cast<uint8_t>(src[ptr + 2]) << 8  |
+        static_cast<uint8_t>(src[ptr + 3])
     ); 
 
     ptr += 4; 
@@ -69,7 +69,7 @@ void BRSTM::parse(const std::vector<char>& fileContent)
     std::cout << (int)this->header.byteOrderMark[0] << (int)this->header.byteOrderMark[1] << "\n"; 
     std::cout << (int)this->header.majorVersion << "\n"; 
     std::cout << (int)this->header.minorVersion << "\n"; 
-    std::cout << (int)this->header.fileSize << "\n"; 
+    std::cout << std::dec << (int)this->header.fileSize << "\n"; 
 
 }
 
