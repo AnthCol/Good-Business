@@ -19,13 +19,16 @@ struct Header {
     uint32_t sizeOfADPC = 0; 
     uint32_t offsetToDATA = 0; 
     uint32_t sizeOfDATA = 0; 
+    uint32_t offsetToHEADChunk1 = 0; 
+    uint32_t offsetToHEADChunk2 = 0; 
+    uint32_t offsetToHEADChunk3 = 0; 
 }; 
 
 struct HEADChunk1 {
     uint8_t codec = 0; 
     uint8_t loopFlag = 0; 
     uint8_t channelCount = 0; 
-    uint16_t sampleRate [2] = {0}; 
+    uint16_t sampleRate = 0; 
     uint32_t loopStart = 0; 
     uint32_t totalSampleCount = 0; 
     uint32_t absoluteOffsetADPCM = 0; 
@@ -44,22 +47,18 @@ struct Track {
     uint8_t channelCount = 0; 
     uint8_t leftChannelID = 0; 
     uint8_t rightChannelID = 0; 
-}; 
-
-// Only for clarity
-struct TrackType0 : Track {
-
-}; 
-
-struct TrackType1 : Track {
+    // Depending on track type, these will go unused. 
+    // Number of tracks is small (at least in the cases I
+    // am using this for, so for now I cba optimizing 16 bytes
+    // into separate classes). 
     uint8_t trackVolume = 0; 
     uint8_t trackPanning = 0; 
 }; 
 
+
 struct OffsetTableHEADChunk2 {
     uint8_t trackDescriptionType = 0; 
     uint32_t offsetToTrackDescription = 0; 
-    Track track; 
 }; 
 
 namespace std {
@@ -68,9 +67,6 @@ namespace std {
         size_t operator()(const OffsetTableHEADChunk2& key) const {
             uint32_t sum = key.trackDescriptionType; 
             sum += key.offsetToTrackDescription; 
-            sum += key.track.channelCount; 
-            sum += key.track.leftChannelID; 
-            sum += key.track.rightChannelID; 
             return std::hash<uint32_t>()(sum); 
         }
     }; 
@@ -79,9 +75,6 @@ namespace std {
 inline bool operator==(const OffsetTableHEADChunk2& lhs, const OffsetTableHEADChunk2& rhs) {
     const bool comparison = (
         lhs.offsetToTrackDescription == rhs.offsetToTrackDescription
-        && lhs.track.channelCount == rhs.track.channelCount 
-        && lhs.track.leftChannelID == rhs.track.leftChannelID 
-        && lhs.track.rightChannelID == rhs.track.rightChannelID
     ); 
     return comparison; 
 }
@@ -90,14 +83,12 @@ inline bool operator==(const OffsetTableHEADChunk2& lhs, const OffsetTableHEADCh
 struct HEADChunk2 {
     uint8_t trackCount = 0; 
     uint8_t trackDescriptionType = 0; 
-    std::unordered_map<OffsetTableHEADChunk2, Track> offsetTablesToTracks; 
+    std::vector<std::pair<OffsetTableHEADChunk2, Track>> offsetTablesToTracks; 
 }; 
 
-
 struct ChannelInfo {
-    uint32_t marker = 0; 
     uint32_t offsetToADPCMCoefficients = 0; 
-    uint8_t ADPCMCoefficients [0x20] = {0}; 
+    uint16_t ADPCMCoefficients [16] = {0}; 
     uint8_t gain [2] = {0}; 
     uint8_t initialPredictor [2] = {0};
     uint8_t historySample1 [2] = {0}; 
@@ -108,45 +99,21 @@ struct ChannelInfo {
 }; 
 
 struct OffsetTableHEADChunk3 {
-    uint32_t marker = 0; 
     uint32_t offsetToChannelInfo = 0; 
 }; 
 
 
-namespace std {
-    template <>
-    struct hash<OffsetTableHEADChunk3> {
-        size_t operator()(const OffsetTableHEADChunk3& key) const {
-            const uint32_t sum = key.marker + key.offsetToChannelInfo; 
-            return std::hash<uint32_t>()(sum); 
-        }
-    }; 
-}
-
-
-inline bool operator==(const OffsetTableHEADChunk3& lhs, const OffsetTableHEADChunk3& rhs) {
-    const bool comparison = (
-        lhs.marker == rhs.marker 
-        && lhs.offsetToChannelInfo == rhs.offsetToChannelInfo
-    ); 
-    return comparison; 
-}
-
-
 struct HEADChunk3 {
     uint8_t channelCount = 0; 
-    std::unordered_map<OffsetTableHEADChunk3, ChannelInfo> offsetTableToChannel; 
+    std::vector<std::pair<OffsetTableHEADChunk3, ChannelInfo>> offsetTableToChannel; 
 }; 
 
 
 struct HEAD {
     uint8_t head [4] = {0};
     uint32_t lengthOfSection = 0; 
-    uint8_t marker1 [4] = {0}; 
     uint32_t offsetToHEAD1 = 0; 
-    uint8_t marker2 [4] = {0}; 
     uint32_t offsetToHEAD2 = 0; 
-    uint8_t marker3 [4] = {0}; 
     uint32_t offsetToHEAD3 = 0; 
 
     HEADChunk1 chunk1; 
@@ -178,7 +145,7 @@ struct Block {
 struct DATA {
     uint8_t data [4] = {0}; 
     uint32_t lengthOfSection = 0; 
-    std::unordered_map<uint32_t, std::vector<Block>> channelToBlocks; 
+    std::map<uint32_t, std::vector<Block>> channelToBlocks; 
 }; 
 
 
